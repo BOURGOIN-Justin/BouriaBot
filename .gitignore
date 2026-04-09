@@ -1,0 +1,18 @@
+# Protection du token du bot discord
+token.txt
+
+# Environnement python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Fichiers temporaires ou contenant des données de joueurs
+*.schematic
+*.xlsx
+temp_*/
+
+# Configuration pycharm
+.idea/
