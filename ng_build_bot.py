@@ -6,6 +6,11 @@ from collections import Counter
 import json
 import os
 import openpyxl
+from openpyxl.chart.label import DataLabelList
+from openpyxl.styles import NamedStyle, Font, PatternFill, Alignment, Border, Side
+from openpyxl.worksheet.table import Table, TableStyleInfo
+from openpyxl.chart import BarChart, Reference, ProjectedPieChart, PieChart
+
 
 def generer_excel_farm(nom_schematic, inventaire_blocs, dico_noms, dico_prix):
     """
@@ -24,20 +29,120 @@ def generer_excel_farm(nom_schematic, inventaire_blocs, dico_noms, dico_prix):
     ws = wb.active
     ws.title = "Liste de Farm"
 
-    # En-têtes des colonnes
-    ws.append(["Nom du Bloc", "ID", "Quantité", "Prix Total ($)"])
+    # On cache le quadrillage gris par défaut
+    ws.sheet_view.showGridLines = False
 
-    # On remplit ligne par ligne
+    # 1. On écrit l'en-tête
+    headers = ["Nom du Bloc", "ID", "Quantité", "Prix Total ($)"]
+    ws.append(headers)
+
+    # 2. On remplit les données ligne par ligne
     for id_bloc, quantite in inventaire_blocs.items():
-        # On cherche le nom via l'ID
         nom = dico_noms.get(id_bloc, "Inconnu")
-        # On cherche le prix via le nom
         prix_unitaire = dico_prix.get(nom, 0)
         total_prix = quantite * prix_unitaire
-
         ws.append([nom, id_bloc, quantite, total_prix])
 
-    # On sauvegarde avec un nom propre
+    # 3. Création du tableau dynamique
+    nb_lignes = ws.max_row
+    zone_tableau = f"A1:D{nb_lignes}"
+
+    tab = Table(displayName="TableauDeFarm", ref=zone_tableau)
+    style = TableStyleInfo(
+        name="TableStyleMedium9",
+        showFirstColumn=False,
+        showLastColumn=False,
+        showRowStripes=True,
+        showColumnStripes=False
+    )
+    tab.tableStyleInfo = style
+    ws.add_table(tab)
+
+    # On crée un trait fin de la même couleur bleue que ton ancien en-tête
+    trait_bleu = Side(border_style="thin", color="366092")
+    bordure_bleue = Border(top=trait_bleu, left=trait_bleu, right=trait_bleu, bottom=trait_bleu)
+
+    # On applique cette bordure sur absolument TOUTES les cases de notre tableau
+    for row in ws.iter_rows(min_row=1, max_row=nb_lignes, min_col=1, max_col=4):
+        for cell in row:
+            cell.border = bordure_bleue
+
+    police_en_tete = Font(bold=True, color="000000")
+    for cell in ws[1]:
+        cell.font = police_en_tete
+
+    # 4. On règle la largeur des colonnes
+    ws.column_dimensions['A'].width = 25
+    ws.column_dimensions['B'].width = 15
+    ws.column_dimensions['C'].width = 15
+    ws.column_dimensions['D'].width = 20
+
+    projected_pie = ProjectedPieChart()
+    projected_pie.type = "pie"
+    projected_pie.splitType = "val"
+    nbGratuit = 0
+    nbPayant= 0
+
+
+
+    for id_bloc, quantite in inventaire_blocs.items():
+        nom = dico_noms.get(id_bloc, "Inconnu")
+        prix_unitaire = dico_prix.get(nom,0)
+        if prix_unitaire == 0:
+            # indice 0 pour le prix à zero
+            nbGratuit += 1
+        else:
+            # indice 1 pour un prix normal
+            nbPayant += 1
+
+    font = Font(name="Cambria", color="000000", size=11, bold=True)
+    border = Border(left=Side(border_style="thin",
+                          color='366092'),
+                right=Side(border_style="thin",
+                           color='366092'),
+                top=Side(border_style="thin",
+                         color='366092'),
+                bottom=Side(border_style="thin",
+                            color='366092'),
+                diagonal=Side(border_style="thin",
+                              color='366092'),
+                diagonal_direction=0,
+                vertical=Side(border_style="thin",
+                              color='366092'),
+                horizontal=Side(border_style="thin",
+                               color='366092')
+               )
+    ws["G1"] = "Type"
+    ws['G1'].font = font
+    ws['G1'].border = border
+    ws["H1"] = "Nombre"
+    ws['H1'].font = font
+    ws['H1'].border = border
+    ws["G2"] = "Gratuit"
+    ws['G2'].border = border
+    ws["H2"] = nbGratuit
+    ws['H2'].border = border
+    ws["G3"] = "Payant"
+    ws['G3'].border = border
+    ws["H3"] = nbPayant
+    ws['H3'].border = border
+
+    # Création du graphique
+    chart = PieChart()
+    chart.title = "Répartition des blocs payants et gratuits"
+
+    # 1. Références des données (Colonne H : Nombres) et catégories (Colonne G : Noms)
+    data = Reference(ws, min_col=8, min_row=1, max_row=3)  # min_row=1 car titles_from_data=True
+    cats = Reference(ws, min_col=7, min_row=2, max_row=3)  # Les étiquettes "Gratuit" / "Payant"
+
+    # 3. Liaison des données au graphique
+    chart.add_data(data, titles_from_data=True)
+    chart.set_categories(cats)
+
+    # 4. Placement sur la feuille
+    ws.add_chart(chart, "G4")
+
+    # 5. On sauvegarde avec un nom propre
     nom_fichier = f"Liste_Farm_{nom_schematic}.xlsx"
     wb.save(nom_fichier)
     return nom_fichier
