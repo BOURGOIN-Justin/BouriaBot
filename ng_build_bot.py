@@ -6,8 +6,7 @@ from collections import Counter
 import json
 import os
 import openpyxl
-from openpyxl.chart.label import DataLabelList
-from openpyxl.styles import NamedStyle, Font, PatternFill, Alignment, Border, Side
+from openpyxl.styles import Font, Border, Side
 from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.chart import BarChart, Reference, ProjectedPieChart, PieChart
 
@@ -205,7 +204,7 @@ def lecture_schematic(name, dicoB, dicoP):
 
 def lecture_fichier_json(name):
     """
-    Permet de lire un fichier au format json
+    Permet de lire un fichier au format json pour récupérer les éléments des blocks
     Args:
         name (str) : Nom du fichier au format json à lire
     """
@@ -219,6 +218,17 @@ def lecture_fichier_json(name):
     print("Données chargées: ", len(donnees_lisibles))
     return donnees_lisibles
 
+def lire_json(nom_fichier):
+    """
+    Lit un fichier JSON et renvoie son contenu brut.
+    Si le fichier n'existe pas, renvoie un dictionnaire vide.
+    """
+    if os.path.exists(nom_fichier):
+        with open(nom_fichier, 'r', encoding='utf-8') as fichier:
+            return json.load(fichier)
+    return {}
+BIBLIO_WE = lire_json("commandes.json")
+
 class NGBuildBot(commands.Bot):
     def __init__(self):
         # Configuration des intents
@@ -231,6 +241,7 @@ class NGBuildBot(commands.Bot):
         await self.tree.sync()
         print("🔄 Commandes Slash synchronisées avec succès !")
 bot = NGBuildBot()
+
 
 @bot.event
 async def on_ready():
@@ -321,6 +332,68 @@ async def devis(interaction: discord.Interaction, fichier: discord.Attachment):
     finally:
         if os.path.exists(chemin_local):
             os.remove(chemin_local)
+
+async def auto_type_cmd(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    # Propose les catégories principales
+    choix = list(BIBLIO_WE.keys())
+    return [app_commands.Choice(name=c.capitalize(), value=c) for c in choix if current.lower() in c.lower()][:25]
+
+
+async def auto_nom(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    # Récupère ce que le joueur a choisi dans la case précédente
+    type_choisi = interaction.namespace.type_commande
+
+    if type_choisi in BIBLIO_WE:
+        choix = list(BIBLIO_WE[type_choisi].keys())
+        return [app_commands.Choice(name=c.capitalize(), value=c) for c in choix if current.lower() in c.lower()][:25]
+    return []
+
+
+async def auto_caract(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    # Récupère les deux cases précédentes
+    type_choisi = interaction.namespace.type_commande
+    nom_choisi = interaction.namespace.nom
+
+    if type_choisi in BIBLIO_WE and nom_choisi in BIBLIO_WE[type_choisi]:
+        choix = list(BIBLIO_WE[type_choisi][nom_choisi].keys())
+        return [app_commands.Choice(name=c.capitalize(), value=c) for c in choix if current.lower() in c.lower()][:25]
+    return []
+
+
+@bot.tree.command(name="we", description="Affiche la commande World Edit pour une texture ou une forme")
+@app_commands.describe(type_commande="Type de commande", nom="Nom de ce que l'on veut", caracteristique="Couleur ou variante")
+@app_commands.autocomplete(type_commande=auto_type_cmd, nom=auto_nom, caracteristique=auto_caract
+)
+async def commande_worldedit(interaction: discord.Interaction, type_commande: str, nom: str, caracteristique: str):
+    type_propre = type_commande.lower().strip()
+    nom_propre = nom.lower().strip()
+    caract_propre = caracteristique.lower().strip()
+
+    try:
+        commandeWE = BIBLIO_WE[type_propre][nom_propre][caract_propre]
+        # Vérification de la version
+        if isinstance(commandeWE, dict):
+            commande = commandeWE.get("we", "Erreur: Commande introuvable")
+            lien_image = commandeWE.get("image", None)
+        else:
+            commande = commandeWE
+            lien_image = None
+
+        embed = discord.Embed(
+            title=f"élément : {type_commande} -> {nom} -> {caracteristique}",
+            color=discord.Color.teal()  # Une jolie couleur Minecraft
+        )
+        embed.add_field(name=" ** </> ** Commande à copier", value=f"```\n{commande}\n```", inline=False)
+
+        if lien_image:
+            embed.set_image(url=lien_image)
+
+        embed.set_footer(text="Clique sur la commande pour la copier")
+
+        await interaction.response.send_message(embed=embed)
+    except KeyError:
+        await interaction.response.send_message("Impossible de trouver cette combinaison dans la base de données. Vérifie l'orthographe !",ephemeral=True)
+
 if __name__ == "__main__":
     f = open('token.txt', 'r')
     bot.run(f.read().strip())

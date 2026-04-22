@@ -1,0 +1,28 @@
+{
+  "texture": {
+    "route": {
+      "principale" : {
+        "we": "//replace <bloc> 25%2126:7,25%2029:2,25%2029:9,25%2071:7",
+        "image" : ""
+      },
+      "secondaire propre" : "//replace <bloc> 14%2126:7,14%2029:2,14%2029:9,14%2071:7,14%2033:9,14%2047:9,2071:13",
+      "secondaire terre" : "//replace <bloc> 16%2047:9,16%2033:9,16%2029:1,16%2025:14,16%2071:13,16%2071:15",
+      "secondaire gravier clair + herbe" : "//replace <bloc> 33%2485:0,33%2:0,33%2149:0"
+    }
+  },
+  "forme" : {
+    "cercle": {
+      "cercle vide" : "//hcyl <bloc> <rayon>",
+      "cercle plein" : "//cyl <bloc> <rayon>"
+    },
+    "cylindre" : {
+      "cylindre plein" : "//sphere <bloc> rayon",
+      "cylindre vide" : "//hsphere <bloc> rayon"
+    },
+    "pyramide" : {
+      "pyramide pleine" : "//pyramid <bloc> <taille>",
+      "pyramide vide" : "//hpyramid <bloc> <taille>"
+    }
+
+  }
+}
