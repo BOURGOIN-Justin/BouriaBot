@@ -8,7 +8,7 @@ import os
 import openpyxl
 from openpyxl.styles import Font, Border, Side
 from openpyxl.worksheet.table import Table, TableStyleInfo
-from openpyxl.chart import BarChart, Reference, ProjectedPieChart, PieChart
+from openpyxl.chart import Reference, ProjectedPieChart, PieChart
 
 
 def generer_excel_farm(nom_schematic, inventaire_blocs, dico_noms, dico_prix):
@@ -393,6 +393,56 @@ async def commande_worldedit(interaction: discord.Interaction, type_commande: st
         await interaction.response.send_message(embed=embed)
     except KeyError:
         await interaction.response.send_message("Impossible de trouver cette combinaison dans la base de données. Vérifie l'orthographe !",ephemeral=True)
+
+@bot.tree.command(name="schematic", description="Envoie un schematic et ses coordonnées dans un channel discord")
+@app_commands.describe(schematic="Fichier .schematic à envoyer", x = "Coordonnée X", y = "Coordonnée Y", z = "Coordonnée Z", image = "Jolie screen du build")
+@app_commands.checks.has_role(1392508222358687824)
+async def envoi_schematic(interaction: discord.Interaction, schematic: discord.Attachment, x: int, y: int, z:int, image: discord.Attachment):
+
+    ID_channel = 1496971071985815722
+    salon = await interaction.client.fetch_channel(ID_channel)
+
+
+    if not schematic.filename.endswith(".schematic"):
+        await interaction.response.send_message("❌ Erreur : Le fichier doit être un `.schematic` !", ephemeral=True)
+        return
+    await interaction.response.defer(ephemeral=True)
+    schem = await schematic.to_file()
+
+    message = discord.Embed(
+        title=f"<:Groupfqsf:1431359830676996167> Nouveau schematic disponible",
+        description="Vous retrouvez ci-dessous les coordonnées ainsi que le fichier à télécharger !",
+        color=discord.Color.green()
+    )
+
+    message.set_thumbnail(url=interaction.client.user.display_avatar.url)
+    message.add_field(name="Coordonnées", value =f"X: **{x}** Y: **{y}** Z: **{z}**")
+    message.add_field(name="Nom du schematic", value=f"**{schematic.filename}**")
+
+    if not image.filename.endswith((".png", ".jpg", ".jpeg", ".gif", ".webp")):
+        await salon.send(embed=message)
+        await salon.send(file=schem)
+        await interaction.edit_original_response(content="⚠️ L'image n'était pas au bon format. Envoi sans image.")
+    else:
+        fichier_image = await image.to_file()
+
+        message.set_image(url=f"attachment://{fichier_image.filename}")
+        await salon.send(embed=message, file=fichier_image)
+        await salon.send(file=schem)
+        await interaction.edit_original_response(content="✅ Le schematic et son image ont bien été envoyés !")
+
+
+@envoi_schematic.error
+async def envoi_schematic_erreur(interaction: discord.Interaction, error: app_commands.AppCommandError):
+
+    if isinstance(error, app_commands.MissingRole):
+        await interaction.response.send_message(
+            "❌ Accès refusé : Tu n'as pas le rôle pour utiliser cette commande !", ephemeral=True)
+    else:
+        await interaction.response.send_message("⚠️ Une erreur inattendue s'est produite.", ephemeral=True)
+        print(f"Erreur sur la commande schematic : {error}")
+
+
 
 if __name__ == "__main__":
     f = open('token.txt', 'r')
