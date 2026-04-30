@@ -9,6 +9,7 @@ import openpyxl
 from openpyxl.styles import Font, Border, Side
 from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.chart import Reference, ProjectedPieChart, PieChart
+import math
 
 
 def generer_excel_farm(nom_schematic, inventaire_blocs, dico_noms, dico_prix):
@@ -227,7 +228,27 @@ def lire_json(nom_fichier):
         with open(nom_fichier, 'r', encoding='utf-8') as fichier:
             return json.load(fichier)
     return {}
+
 BIBLIO_WE = lire_json("commandes.json")
+BIBLIO_CRAFT = lire_json("craft.json")
+
+def recherche_craft(item: str, quantite, dictionnaire_recette: dict):
+    quantite = float(quantite)
+    panier_total = Counter()
+
+    if item in dictionnaire_recette:
+
+        for ingredient, quantite_ingredient in dictionnaire_recette[item].items():
+
+            if ingredient == "image":
+                continue
+            quantite_total = quantite * quantite_ingredient
+            sous_ingredient = recherche_craft(ingredient, quantite_total, dictionnaire_recette)
+            panier_total.update(sous_ingredient)
+    else:
+        panier_total[item] += quantite
+    return panier_total
+
 
 class NGBuildBot(commands.Bot):
     def __init__(self):
@@ -282,29 +303,27 @@ class BoutonExcel(discord.ui.View):
 @bot.tree.command(name="devis", description="Génère un devis à partir d'un fichier .schematic")
 @app_commands.describe(fichier="Le fichier .schematic à analyser")
 async def devis(interaction: discord.Interaction, fichier: discord.Attachment):
-    # Vérification de l'extension du fichier
+
     if not fichier.filename.endswith(".schematic"):
-        # L'argument ephemeral=True rend le message visible uniquement par celui qui a tapé la commande
+
         await interaction.response.send_message("❌ Erreur : Le fichier doit être un `.schematic` !", ephemeral=True)
         return
-    # On indique à Discord que le bot "réfléchit" pour éviter qu'il affiche "L'application n'a pas répondu"
+
     await interaction.response.defer()
     try:
-        # Chargement des bases de données JSON
+
         with open("all.json", 'r', encoding='utf-8') as fichiertot:
             donnees_totale = json.load(fichiertot)
         with open("prix.json", 'r', encoding='utf-8') as f_prix:
             donnees_prix = json.load(f_prix)
-        # Sauvegarde temporaire du fichier sur le Raspberry Pi
+
         chemin_local = fichier.filename
         await fichier.save(chemin_local)
 
-        # Lancement de ton algorithme de calcul
         prix, liste_erreurs, blocks_total, count = lecture_schematic(chemin_local, donnees_totale, donnees_prix)
         nom_propre = fichier.filename.replace('.schematic', '')
         couleur_facture = discord.Color.red() if len(liste_erreurs) > 0 else discord.Color.green()
 
-        # Création de la facture
         facture = discord.Embed(
             title=f"<:Groupfqsf:1431359830676996167>  Devis pour le schematic : **{nom_propre}**",
             description="Voici l'analyse des coûts. Les blocs obtenables gratuitement sont comptabilisés à 0$ (Marbre, minerais, etc).",
@@ -333,7 +352,7 @@ async def devis(interaction: discord.Interaction, fichier: discord.Attachment):
         if os.path.exists(chemin_local):
             os.remove(chemin_local)
 
-async def auto_type_cmd(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+async def auto_type_cmd(interaction: discord.Interaction,current: str) -> list[app_commands.Choice[str]]:
     # Propose les catégories principales
     choix = list(BIBLIO_WE.keys())
     return [app_commands.Choice(name=c.capitalize(), value=c) for c in choix if current.lower() in c.lower()][:25]
@@ -359,11 +378,14 @@ async def auto_caract(interaction: discord.Interaction, current: str) -> list[ap
         return [app_commands.Choice(name=c.capitalize(), value=c) for c in choix if current.lower() in c.lower()][:25]
     return []
 
+async def auto_cmd_nom_craft(interaction: discord.Interaction, current: str) -> list[app_commands.Choice[str]]:
+    choix = list(BIBLIO_CRAFT.keys())
+    return [app_commands.Choice(name=c.capitalize(), value=c) for c in choix if current.lower() in c.lower()][:25]
+
 
 @bot.tree.command(name="we", description="Affiche la commande World Edit pour une texture ou une forme")
 @app_commands.describe(type_commande="Type de commande", nom="Nom de ce que l'on veut", caracteristique="Couleur ou variante")
-@app_commands.autocomplete(type_commande=auto_type_cmd, nom=auto_nom, caracteristique=auto_caract
-)
+@app_commands.autocomplete(type_commande=auto_type_cmd, nom=auto_nom, caracteristique=auto_caract)
 async def commande_worldedit(interaction: discord.Interaction, type_commande: str, nom: str, caracteristique: str):
     type_propre = type_commande.lower().strip()
     nom_propre = nom.lower().strip()
@@ -381,7 +403,7 @@ async def commande_worldedit(interaction: discord.Interaction, type_commande: st
 
         embed = discord.Embed(
             title=f"élément : {type_commande} -> {nom} -> {caracteristique}",
-            color=discord.Color.teal()  # Une jolie couleur Minecraft
+            color=discord.Color.teal()
         )
         embed.add_field(name=" ** </> ** Commande à copier", value=f"```\n{commande}\n```", inline=False)
 
@@ -442,7 +464,70 @@ async def envoi_schematic_erreur(interaction: discord.Interaction, error: app_co
         await interaction.response.send_message("⚠️ Une erreur inattendue s'est produite.", ephemeral=True)
         print(f"Erreur sur la commande schematic : {error}")
 
+@bot.tree.command(name="craft", description="Calcul les ressources primaires pour le craft d'items compliqué")
+@app_commands.describe(nom="Nom de l'item à décomposer", quantite="Quantité de l'item à craft")
+@app_commands.autocomplete(nom=auto_cmd_nom_craft)
+async def craft(interaction: discord.Interaction, nom: str, quantite: float):
+    nom_propre = nom.lower().strip()
+    quantite_float = float(quantite)
 
+    quantite_propre = int(quantite_float) if quantite_float.is_integer() else quantite_float
+
+    if nom_propre not in BIBLIO_CRAFT:
+        await interaction.response.send_message(f"❌ Erreur : Je ne connais pas la recette pour `{nom_propre}`.", ephemeral=True)
+        return
+    await interaction.response.defer()
+
+    lien_image = BIBLIO_CRAFT[nom_propre].get("image", None)
+
+    res = recherche_craft(nom_propre, quantite, BIBLIO_CRAFT)
+
+
+    texte_tmp = ""
+
+    for matiere, qte in res.items():
+        qte_items = math.ceil(qte)
+
+        nb_dc = qte_items // 3456
+        reste = qte_items % 3456
+
+        nb_lignes = reste // 576
+        reste = reste % 576
+
+        nb_stacks = reste // 64
+        reste_items = reste % 64
+
+        parties = []
+        if nb_dc > 0:
+            parties.append(f"{nb_dc} DC")
+
+        if nb_lignes > 0:
+            parties.append(f"{nb_lignes} ligne{'s' if nb_lignes > 1 else ''}")
+
+        if nb_stacks > 0:
+            parties.append(f"{nb_stacks} stack{'s' if nb_stacks > 1 else ''}")
+
+        if reste_items > 0 or not parties:
+            parties.append(f"{reste_items}")
+
+        if len(parties) > 1:
+            texte_valeur = ", ".join(parties[:-1]) + " et " + parties[-1]
+        else:
+            texte_valeur = parties[0]
+
+        texte_tmp += f"🔸 **{matiere.capitalize()}**: {texte_valeur}\n"
+
+    embed = discord.Embed(
+        title=f"Craft de {quantite_propre} {nom_propre}",
+        description="Voici la liste des matières premières à récupérer : ",
+        color=discord.Color.teal()
+    )
+    embed.add_field(name="Ressources totales nécessaires au craft\n", value=texte_tmp, inline=False)
+
+    if lien_image:
+        embed.set_image(url=lien_image)
+
+    await interaction.followup.send(embed=embed)
 
 if __name__ == "__main__":
     f = open('token.txt', 'r')

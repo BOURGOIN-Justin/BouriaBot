@@ -1,0 +1,137 @@
+{
+  "moteur vulcain": {
+    "tuyere":  1,
+    "propulseur thermique": 1,
+    "steel plate": 576,
+    "Poudre à canon": 448,
+    "niobium compressé": 4,
+    "dragonstone": 32,
+    "image": "https://cdn.discordapp.com/attachments/1309952577781239868/1499144927114952856/image.png?ex=69f3bb03&is=69f26983&hm=7908498d9c15f93a00f644a88baf8734cfe221ea64ea0cdda932d8ff87255471&"
+  },
+  "tuyere": {
+    "magnesium compressé": 8,
+    "tin plate": 256,
+    "iron plate": 256,
+    "dragonstone": 10,
+    "cuivre compressé": 120,
+    "image" : "https://cdn.discordapp.com/attachments/1309952577781239868/1499148323846754304/image.png?ex=69f3be2d&is=69f26cad&hm=2f5d5ce49549378d51da527a3b526878cbf4565515f486e34a3fb8a0a06dbada&"
+  },
+  "steel plate": {
+    "steel ingot": 4,
+    "image": "https://cdn.discordapp.com/attachments/1309952577781239868/1499148941961203927/image.png?ex=69f3bec0&is=69f26d40&hm=cce286717b4f070b3992975c1a9ac997d77124c74057f1d534587dfce90646e3&"
+  },
+  "steel ingot": {
+    "steel dust": 1,
+    "image": "https://cdn.discordapp.com/attachments/1309952577781239868/1499149458913366126/image.png?ex=69f3bf3b&is=69f26dbb&hm=618c288b8812efc3f1acdcbcbf7429be083733297a63efd9985cc2ab94ae8222&"
+  },
+  "steel dust":{
+    "charbon": 4,
+    "lingot de fer": 1,
+    "image": "https://cdn.discordapp.com/attachments/1309952577781239868/1499149122211676291/image.png?ex=69f3beeb&is=69f26d6b&hm=6a74ac66b085e41e9146c81f9397d27e8884dcf19e33978b9a4b6997dbcee7e5&"
+  },
+  "tin plate":{
+    "tin ingot": 4,
+    "image": "https://cdn.discordapp.com/attachments/1309952577781239868/1499149637293052034/image.png?ex=69f3bf66&is=69f26de6&hm=af4b55582716fd08b47e90a4b8d5e4d7081e20076cbda6cf1c2bacfdb9bb6f0e&"
+  },
+  "iron plate": {
+    "lingot de fer": 4,
+    "image": "https://cdn.discordapp.com/attachments/1309952577781239868/1499149809297395853/image.png?ex=69f3bf8f&is=69f26e0f&hm=960705eacbb14f8c2aaacbb75d324b9d8c51005aa03be4d45b388e22df6b3be1&"
+  },
+  "cuivre compressé": {
+    "lingot de cuivre": 2,
+    "image": "https://cdn.discordapp.com/attachments/1309952577781239868/1499150022871351476/image.png?ex=69f3bfc2&is=69f26e42&hm=bc8e4020305a41cf7eb8a0803defc6668f83eeac20522a79ef1efe3f6eff6174&"
+  },
+  "circuit d'amélioration": {
+    "plaque eco" : 80,
+    "steel plate" : 50,
+    "steel compressé": 70,
+    "elite circuit": 61,
+    "circuit en gallium": 2,
+    "compressed meteoric iron": 29,
+    "niobium compressé": 8,
+    "propulseur thermique": 1,
+    "dispositif de guidage": 2,
+    "fibre de carbone": 4,
+    "magnesium compressé": 2,
+    "lingot d'alliage": 2,
+    "météore": 5,
+    "circuit tiber": 2,
+    "moteur en tiber (t5)": 2
+  },
+  "plaque eco": {
+    "lingot eco": 4
+  },
+  "steel compressé": {
+    "steel ingot": 2
+  },
+  "elite circuit": {
+    "lingot d'or": 6,
+    "advanced circuit": 2,
+    "bloc de lapis-lazuli": 1
+  },
+  "bloc de lapis-lazuli": {
+    "lapis-lazuli": 9
+  },
+  "advanced circuit": {
+    "redstone": 6,
+    "diamant": 1,
+    "basic circuit": 2
+  },
+  "basic circuit": {
+    "redstone": 4,
+    "comparateur": 4,
+    "bronze plate": 1
+  },
+  "comparateur": {
+    "roche": 3,
+    "quartz": 1,
+    "torche de redstone": 3
+  },
+  "bronze plate": {
+    "bronze ingot": 4
+  },
+  "torche de redstone": {
+    "redstone": 1,
+    "baton": 1
+  },
+  "baton": {
+    "planche de bois": 0.5
+  },
+  "circuit en gallium": {
+    "gallium": 8,
+    "redstone": 1
+  },
+  "compressed meteoric iron": {
+    "meteoric iron ingot": 1
+  },
+  "meteoric iron ingot": {
+    "fer meteorique brut": 1
+  },
+  "niobium compressé":{
+    "niobium": 1
+  },
+  "fibre de carbone": {
+    "bloc de charbon": 6,
+    "magnesium compressé": 1,
+    "tiber compressé renforcé": 1,
+    "fibre de bois millénaire": 1
+  },
+  "bloc de charbon": {
+    "charbon": 9
+  },
+  "magnesium compressé": {
+    "magnesium": 1
+  },
+  "tiber compressé renforcé": {
+    "tiber compressé": 4,
+    "gold plate": 5
+  },
+  "tiber compressé":{
+    "crystal tiber": 1
+  },
+  "gold plate": {
+    "lingot d'or": 4
+  }
+
+
+}
