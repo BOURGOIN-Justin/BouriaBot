@@ -131,6 +131,161 @@
   },
   "gold plate": {
     "lingot d'or": 4
+  },
+  "moteur propergol": {
+    "tuyere": 1,
+    "propulseur thermique": 1,
+    "kevlar": 1,
+    "steel plate": 576,
+    "poudre a canon": 384,
+    "fibre de bois millénaire": 5,
+    "cuivre compressé": 64
+  },
+  "fusee de niveau 2": {
+    "plan fusee spaciale": 1,
+    "moteur vulcain": 1,
+    "moteur propergol": 1,
+    "dispositif de guidage": 2,
+    "gold plate": 64,
+    "niobium compressé": 8,
+    "magnesium compressé": 20,
+    "circuit en gallium": 10,
+    "oxygen compressor": 12,
+    "oxygen decompressor": 12,
+    "oxygen sealer":  4,
+    "oxygen detector": 6,
+    "compresseur electrique": 4,
+    "collecteur d'oxygene": 6,
+    "electrovanne": 8,
+    "interrupteur":10,
+    "advanced circuit": 32,
+    "elite circuit": 20,
+    "fibre de bois millenaire": 16,
+    "cable en aluminium renforcé scellable": 16,
+    "panneau solaire complet": 50
+  },
+  "magnesium compressé": {
+    "magnesium": 1
+  },
+  "oxygen compressor": {
+    "steel compressé": 4,
+    "aluminium compressé": 3,
+    "bronze compressé": 1,
+    "concentrateur d'oxygene": 1
+  },
+  "concentrateur d'oxygene": {
+    "steel compressé": 4,
+    "étain compressé": 3,
+    "cartouche en étain": 1,
+    "conduit d'air": 1
+  },
+  "cartouche en étain": {
+    "lingot d'étain": 3.5
+  },
+  "conduit d'air": {
+    "étain compressé": 3,
+    "steel compressé": 1
+  },
+  "étain compressé": {
+    "lingot d'étain": 2
+  },
+  "bronze compressé": {
+    "bronze ingot": 2
+  },
+  "bronze ingot":{
+    "bronze dust": 1
+  },
+  "bronze dust": {
+    "lingot de cuivre": 2,
+    "lingot d'étain": 1
+  },
+  "aluminium compressé": {
+    "lingot d'aluminium": 2
+  },
+  "oxygen decompressor": {
+    "steel compressé": 4,
+    "aluminium compressé": 2,
+    "ventilateur d'air": 1,
+    "concentrateur d'oxygene": 1,
+    "torche de redstone": 1
+
+  },
+  "ventilateur d'air": {
+    "steel compressé": 4,
+    "wafer de base": 1,
+    "redstone": 1
+  },
+  "wafer de base": {
+    "silicium brut": 2,
+    "diamant": 10,
+    "redstone": 10,
+    "torche de redstone": 7
+  },
+  "oxygen sealer": {
+    "aluminium compressé": 4,
+    "steel compressé": 2,
+    "ventilateur d'air": 1,
+    "conduit d'air": 2
+  },
+  "oxygen detector": {
+    "steel compressé": 3,
+    "conduit d'air": 2,
+    "wafer de base": 1,
+    "redstone": 2,
+    "aluminium compressé": 1
+  },
+  "compresseur electrique": {
+    "steel compressé": 4,
+    "enclume": 1,
+    "bronze compressé": 1,
+    "cable en aluminium": 2,
+    "wafer avancé": 1
+  },
+  "enclume":{
+    "bloc de fer": 3,
+    "lingot de fer": 4
+},
+  "bloc de fer": {
+    "lingot de fer": 9
+  },
+  "cable en aluminium":{
+    "laine noire": 1,
+    "lingot d'aluminium": 0.5
+  },
+  "wafer avancé": {
+    "wafer de base": 1,
+    "silicium brut": 2,
+    "copper plate": 1
+  },
+  "copper plate": {
+    "lingot de cuivre": 4
+  },
+  "collecteur d'oxygene": {
+    "steel compressé": 3,
+    "ventilateur d'air": 1,
+    "cartouche en étain": 1,
+    "conduit d'air": 1,
+    "aluminium compressé": 2,
+    "concentrateur d'oxygene": 1
+  },
+  "electrovanne": {
+    "steel compressé": 7,
+    "comparateur": 1,
+    "elite circuit": 1
+  },
+  "interrupteur": {
+    "steel compressé": 7,
+    "comparateur": 1,
+    "basic circuit": 1
+  },
+  "cable en aluminium renforcé scellable": {
+    "bloc de décoration en étain": 4,
+    "aluminium compressé": 4,
+    "cable en aluminium renforcé": 1
+  },
+  "bloc de décoration en étain": {
+    "roche": 0.25,
+    "étain compressé": 0.25
   }
 
 
