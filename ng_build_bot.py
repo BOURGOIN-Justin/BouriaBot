@@ -192,7 +192,7 @@ def lecture_schematic(name, dicoB, dicoP):
             print(f"ID inexistant : {cle_recherche}")
             if cle_recherche not in blocs_manquants:
                 blocs_manquants.append(cle_recherche)
-            with open('all.json', 'w', encoding='utf-8') as fichier:
+            with open('data/all.json', 'w', encoding='utf-8') as fichier:
                 json.dump(dicoB, fichier, indent=4, ensure_ascii=False)
         prix_bloc = dicoP.get(nom_du_bloc, 0)
         sous_total = prix_bloc * quantite
@@ -229,8 +229,8 @@ def lire_json(nom_fichier):
             return json.load(fichier)
     return {}
 
-BIBLIO_WE = lire_json("commandes.json")
-BIBLIO_CRAFT = lire_json("craft.json")
+BIBLIO_WE = lire_json("data/commandes.json")
+BIBLIO_CRAFT = lire_json("data/craft.json")
 
 def recherche_craft(item: str, quantite, dictionnaire_recette: dict):
     quantite = float(quantite)
@@ -312,9 +312,9 @@ async def devis(interaction: discord.Interaction, fichier: discord.Attachment):
     await interaction.response.defer()
     try:
 
-        with open("all.json", 'r', encoding='utf-8') as fichiertot:
+        with open("data/all.json", 'r', encoding='utf-8') as fichiertot:
             donnees_totale = json.load(fichiertot)
-        with open("prix.json", 'r', encoding='utf-8') as f_prix:
+        with open("data/prix.json", 'r', encoding='utf-8') as f_prix:
             donnees_prix = json.load(f_prix)
 
         chemin_local = fichier.filename
