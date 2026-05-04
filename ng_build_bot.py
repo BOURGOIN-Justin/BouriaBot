@@ -393,7 +393,7 @@ async def commande_worldedit(interaction: discord.Interaction, type_commande: st
 
     try:
         commandeWE = BIBLIO_WE[type_propre][nom_propre][caract_propre]
-        # Vérification de la version
+        # Vérification de la versio
         if isinstance(commandeWE, dict):
             commande = commandeWE.get("we", "Erreur: Commande introuvable")
             lien_image = commandeWE.get("image", None)
