@@ -8,15 +8,15 @@ FICHIER_MEMOIRE = "prix.json"
 
 def sauvegarder_prix(nom_bloc, prix_bloc):
 
-    if os.path.exists("prix.json"):
-        with open("prix.json", 'r', encoding='utf-8') as f:
+    if os.path.exists("data/prix.json"):
+        with open("data/prix.json", 'r', encoding='utf-8') as f:
             memoire = json.load(f)
     else:
         memoire = {}
 
     memoire[nom_bloc] = prix_bloc
 
-    with open("prix.json", 'w', encoding='utf-8') as f:
+    with open("data/prix.json", 'w', encoding='utf-8') as f:
         json.dump(memoire, f, indent=4, ensure_ascii=False)
 
     print(f"{nom_bloc}) a été sauvegardé définitivement !")
@@ -56,19 +56,20 @@ def lecture_schematic(name, dicoB, dicoP):
             dicoB[cle_recherche] = nom
             nom_du_bloc = nom
     
-            with open('all.json', 'w', encoding='utf-8') as fichier:
+            with open('data/all.json', 'w', encoding='utf-8') as fichier:
 
                 json.dump(dicoB, fichier, indent=4, ensure_ascii=False)
-        #prix_bloc = dicoP.get(nom_du_bloc, "Prix inconnu")
+        prix_bloc = dicoP.get(nom_du_bloc, "Prix inconnu")
 
-        #if prix_bloc == "Prix inconnu":
-            #print(f"Prix inexistant : {dicoB[cle_recherche]}")
-            #prix = float(input("Veuillez saisir Le prix bloc : "))
-            #dicoP[nom_du_bloc] = prix
-           # prix_bloc = prix
-            #sauvegarder_prix(nom_du_bloc, prix)
-        #sous_total = prix_bloc * quantite
-        #prix_total += sous_total
+        if prix_bloc == "Prix inconnu":
+            print(f"Prix inexistant : {dicoB[cle_recherche]}")
+            prix = float(input("Veuillez saisir Le prix bloc : "))
+            dicoP[nom_du_bloc] = prix
+            prix_bloc = prix
+
+            sauvegarder_prix(nom_du_bloc, prix)
+        sous_total = prix_bloc * quantite
+        prix_total += sous_total
         print(f"ID Minecraft [{cle_recherche}] : {quantite} blocs | name : {nom_du_bloc}")
 
     print("-" * 40)
@@ -92,13 +93,10 @@ def lecture_fichier_json(name):
     print("Données chargées: ", len(donnees_lisibles))
     return donnees_lisibles
 
-
-# --- LANCEMENT DU SCRIPT ---
-
-with open("all.json", 'r', encoding='utf-8') as fichier:
+with open("data/all.json", 'r', encoding='utf-8') as fichier:
     donnees_totale = json.load(fichier)
-with open("prix.json", 'r', encoding='utf-8') as f_prix:
+with open("data/prix.json", 'r', encoding='utf-8') as f_prix:
     donnees_prix = json.load(f_prix)
 
 # Appel de la fonction
-lecture_schematic("PapoushopRDC.schematic", donnees_totale, donnees_prix)
+lecture_schematic("MON_UNESCO.schematic", donnees_totale, donnees_prix)

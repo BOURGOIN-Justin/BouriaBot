@@ -286,7 +286,82 @@
   "bloc de décoration en étain": {
     "roche": 0.25,
     "étain compressé": 0.25
+  },
+  "panneau solaire complet": {
+    "cable en aluminium": 3,
+    "module solaire simple": 6
+  },
+   "module solaire simple": {
+     "verre": 3,
+     "wafer solaire bleu": 3,
+     "cable en aluminium": 3
+   },
+  "verre": {
+    "sable": 1
+  },
+  "wafer solaire bleu": {
+    "lapis-lazuli": 16,
+    "wafer de base": 1
+  },
+  "Turret platform": {
+    "steel plate": 21,
+    "steel compressé": 9,
+    "module de stockage d'energie avancé": 1,
+    "copper plate": 22,
+    "fibre de bois millénaire": 1
+  },
+  "module de stockage d'energie avancé": {
+    "steel compressé": 6,
+    "module de stockage d'energie": 3
+  },
+  "module de stockage d'energie" : {
+    "steel compressé" : 6,
+    "batterie": 3
+  },
+  "batterie": {
+    "étain compressé" : 5,
+    "redstone": 1,
+    "charbon": 1
+  },
+  "ogive tier II": {
+    "steel compressé": 16,
+    "cuivre compressé": 16,
+    "copper plate": 16,
+    "poudre à canon": 12,
+    "ogive tier I": 5
+  },
+  "ogive tier I": {
+    "steel compressé": 16,
+    "tin plate": 16,
+    "tnt": 16,
+    "poudre à canon": 16
+  },
+  "tnt": {
+    "sable": 4,
+    "poudre à canon": 5
+  },
+  "ogive tier III": {
+    "plomb compressé": 16,
+    "zirconium": 1,
+    "deutérium": 5,
+    "souffre": 10,
+    "déchets nucléaires": 10,
+    "ogive tier II": 5,
+    "barre d'uranium 238": 2
+  },
+  "balise de visée": {
+    "cuivre compressé": 35,
+    "aluminium block": 24,
+    "plomb compressé": 3,
+    "fibre de bois millénaire": 2,
+    "copper plate": 60,
+    "steel compressé": 64,
+    "steel plate": 61
+  },
+  "aluminium block": {
+    "lingot d'aluminium": 9
+  },
+  "plomb compressé": {
+    "plomb": 1
   }
-
-
 }

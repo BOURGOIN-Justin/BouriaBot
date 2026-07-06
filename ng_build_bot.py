@@ -10,6 +10,12 @@ from openpyxl.styles import Font, Border, Side
 from openpyxl.worksheet.table import Table, TableStyleInfo
 from openpyxl.chart import Reference, ProjectedPieChart, PieChart
 import math
+import requests
+import time
+from datetime import datetime
+from fpdf import FPDF
+from fpdf.enums import TableCellFillMode, XPos, YPos
+from fpdf.fonts import FontFace
 
 
 def generer_excel_farm(nom_schematic, inventaire_blocs, dico_noms, dico_prix):
@@ -32,16 +38,37 @@ def generer_excel_farm(nom_schematic, inventaire_blocs, dico_noms, dico_prix):
     # On cache le quadrillage gris par défaut
     ws.sheet_view.showGridLines = False
 
+    blocs = {}
+
+    for id_bloc, quantite in inventaire_blocs.items():
+        nom = dico_noms.get(id_bloc, "Inconnu")
+        prix_unitaire = dico_prix.get(nom, 0)
+
+        if nom not in blocs:
+            blocs[nom] = {
+                "ids": [],
+                "quantite": 0,
+                "prix_unitaire": prix_unitaire
+            }
+
+        blocs[nom]["quantite"] += quantite
+        if id_bloc not in blocs[nom]["ids"]:
+            blocs[nom]["ids"].append(id_bloc)
+
     # 1. On écrit l'en-tête
     headers = ["Nom du Bloc", "ID", "Quantité", "Prix Total ($)"]
     ws.append(headers)
 
     # 2. On remplit les données ligne par ligne
-    for id_bloc, quantite in inventaire_blocs.items():
-        nom = dico_noms.get(id_bloc, "Inconnu")
-        prix_unitaire = dico_prix.get(nom, 0)
-        total_prix = quantite * prix_unitaire
-        ws.append([nom, id_bloc, quantite, total_prix])
+    for nom, data in blocs.items():
+        quantite_totale = data["quantite"]
+        prix_total = quantite_totale * data["prix_unitaire"]
+
+        texte_ids = ", ".join(data["ids"])
+        if len(texte_ids) > 25:
+            texte_ids = texte_ids[:22] + "..."
+
+        ws.append([nom, texte_ids, quantite_totale, prix_total])
 
     # 3. Création du tableau dynamique
     nb_lignes = ws.max_row
@@ -83,16 +110,10 @@ def generer_excel_farm(nom_schematic, inventaire_blocs, dico_noms, dico_prix):
     nbGratuit = 0
     nbPayant= 0
 
-
-
-    for id_bloc, quantite in inventaire_blocs.items():
-        nom = dico_noms.get(id_bloc, "Inconnu")
-        prix_unitaire = dico_prix.get(nom,0)
-        if prix_unitaire == 0:
-            # indice 0 pour le prix à zero
+    for nom, data in blocs.items():
+        if data["prix_unitaire"] == 0:
             nbGratuit += 1
         else:
-            # indice 1 pour un prix normal
             nbPayant += 1
 
     font = Font(name="Cambria", color="000000", size=11, bold=True)
@@ -147,9 +168,75 @@ def generer_excel_farm(nom_schematic, inventaire_blocs, dico_noms, dico_prix):
     wb.save(nom_fichier)
     return nom_fichier
 
+
+def generer_pdf_farm(nom_fichier, inventaire_blocs, dico_noms, dico_prix):
+    pdf = FPDF()
+    pdf.add_page()
+
+    pdf.image("logo.png",10,4,25)
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.cell(0, 10, "Liste de Farm", new_x=XPos.LMARGIN, new_y=YPos.NEXT, align="C")
+    pdf.ln(10)
+
+    blocs_groupes = {}
+
+    for id_bloc, quantite in inventaire_blocs.items():
+        nom = dico_noms.get(id_bloc, "Inconnu")
+        prix_unitaire = dico_prix.get(nom, 0)
+
+        if nom not in blocs_groupes:
+            blocs_groupes[nom] = {
+                "ids": [],
+                "quantite": 0,
+                "prix_unitaire": prix_unitaire
+            }
+
+        blocs_groupes[nom]["quantite"] += quantite
+
+        if id_bloc not in blocs_groupes[nom]["ids"]:
+            blocs_groupes[nom]["ids"].append(id_bloc)
+
+    headings_style = FontFace(emphasis="BOLD", color=255, fill_color=(255, 100, 0))
+
+    with pdf.table(
+            borders_layout="HORIZONTAL_LINES",
+            cell_fill_color=(240, 240, 240),
+            cell_fill_mode=TableCellFillMode.ROWS,
+            headings_style=headings_style,
+            line_height=8,
+            text_align=("LEFT", "CENTER", "RIGHT", "RIGHT"),
+            width=190
+    ) as table:
+
+        # En-tête
+        header = table.row()
+        header.cell("Nom du Bloc")
+        header.cell("ID(s)")
+        header.cell("Quantité")
+        header.cell("Prix ($)")
+
+        for nom, info in blocs_groupes.items():
+            quantite_totale = info["quantite"]
+            prix_total = quantite_totale * info["prix_unitaire"]
+            texte_prix = f"{prix_total:,}$"
+
+            texte_ids = ", ".join(info["ids"])
+            if len(texte_ids) > 15:
+                texte_ids = texte_ids[:15] + "..."
+
+            row = table.row()
+            row.cell(nom)
+            row.cell(texte_ids)
+            row.cell(str(quantite_totale))
+            row.cell(texte_prix)
+
+    pdf.output(nom_fichier)
+    return nom_fichier
+
+
 def lecture_schematic(name, dicoB, dicoP):
     """
-    Permet de lire un fichier au format schematic
+    Permet de lire un fichier au format schematic (NBT)
     Args:
         name (str) : Nom du fichier à analyser
         dicoB (dict) : Dictionnaire qui contient les IDs de blocs et le nom associé
@@ -250,14 +337,122 @@ def recherche_craft(item: str, quantite, dictionnaire_recette: dict):
     return panier_total
 
 
+
 class NGBuildBot(commands.Bot):
     def __init__(self):
-        # Configuration des intents
         intents = discord.Intents.default()
         intents.message_content = True
-        # On initialise avec un préfixe bidon car on utilise les Slash Commands
         super().__init__(command_prefix="!", intents=intents)
-    # Cette fonction synchronise les commandes "/" avec Discord au démarrage
+        #configuration yoxo
+        client = open('Client_ID.txt', 'r')
+        self.yoxo_client_id = client.read().strip()
+        client.close()
+        client = open('Client_Secret_ID.txt', 'r')
+        self.yoxo_client_secret = client.read().strip()
+        client.close()
+        self.yoxo_token = None
+        self.yoxo_expiry = 0
+
+# Mise en place des cogs
+    async def setup_hook(self):
+        await self.load_extension("cogs.liste_alliance")
+        await self.load.extension("cogs.validation")
+
+        await self.tree.sync()
+
+    async def get_alliance_details(self, alliance_name):
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        serveur = "black"
+        endpoint = f"java/alliance/{date_str}/{serveur}/{alliance_name}"
+
+        json_response = await self.call_yoxo_api(endpoint)
+        if not json_response or not json_response.get("data"):
+            return None
+        api_timestamp_ms = json_response.get("metadata", {}).get("timestamp", time.time() * 1000)
+        api_timestamp_s = int(api_timestamp_ms / 1000)
+
+        alliance_data = json_response["data"][0]
+
+        resultats = {
+            "chefs": [],
+            "membres": [],
+            "protectorats": [],
+            "last_update": api_timestamp_s
+        }
+
+        #LEADERS
+        for pays_name in alliance_data.get("leaders", []):
+            chef = await self.get_country_leader(pays_name, date_str, serveur)
+            resultats["chefs"].append({"pays": pays_name, "chef": chef})
+
+        #MEMBERS
+        for pays_name in alliance_data.get("members", []):
+            chef = await self.get_country_leader(pays_name, date_str, serveur)
+            resultats["membres"].append({"pays": pays_name, "chef": chef})
+
+        for pays_name in alliance_data.get("protectorats", []):
+            chef = await self.get_country_leader(pays_name, date_str, serveur)
+            resultats["protectorats"].append({"pays": pays_name, "chef": chef})
+
+        return resultats
+
+    # Petite fonction utilitaire pour éviter de répéter le code
+    async def get_country_leader(self, pays_name, date, serveur):
+        c_json = await self.call_yoxo_api(f"java/country/{date}/{serveur}/{pays_name}")
+        if c_json and "data" in c_json and len(c_json["data"]) > 0:
+            return c_json["data"][0].get("leader", "Inconnu")
+        return "Inconnu"
+
+    async def call_yoxo_api(self, endpoint, params=None):
+        token = self.get_yoxo_token()
+        if not token: return None
+
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json"
+        }
+
+        # L'URL de base est maintenant en V2
+        url = f"https://api.yoxo.software/v2/{endpoint}"
+
+        try:
+            response = requests.get(url, headers=headers, timeout=15)
+            if response.status_code == 200:
+                return response.json()
+            elif response.status_code == 404:
+                print(f"⚠️ Données non disponibles pour cette date ({endpoint})")
+                return None
+            else:
+                print(f"❌ Erreur API ({response.status_code}): {response.text}")
+                return None
+        except Exception as e:
+            print(f"💥 Erreur critique API: {e}")
+            return None
+
+    def get_yoxo_token(self):
+        """Récupère ou rafraîchit le jeton d'accès Yoxo"""
+        # Si le token expire dans moins de 2 minutes, on le renouvelle
+        if self.yoxo_token is None or time.time() > self.yoxo_expiry - 120:
+            url = "https://auth.yoxo.software/oauth2/token"
+            data = {
+                "grant_type": "client_credentials",
+                "client_id": self.yoxo_client_id,
+                "client_secret": self.yoxo_client_secret,
+                "scope": "api_access"
+            }
+            try:
+                response = requests.post(url, data=data)
+                if response.status_code == 200:
+                    res_json = response.json()
+                    self.yoxo_token = res_json["access_token"]
+                    self.yoxo_expiry = time.time() + res_json["expires_in"]
+                    print("✅ Nouveau Token Yoxo généré.")
+                else:
+                    print(f"❌ Erreur Auth Yoxo : {response.text}")
+            except Exception as e:
+                print(f"⚠️ Erreur connexion Yoxo : {e}")
+        return self.yoxo_token
+
     async def setup_hook(self):
         await self.tree.sync()
         print("🔄 Commandes Slash synchronisées avec succès !")
@@ -283,9 +478,25 @@ class BoutonExcel(discord.ui.View):
         self.donnees_totale = donnees_totale
         self.donnees_prix = donnees_prix
 
+    @discord.ui.button(label="Télécharger le PDF", style=discord.ButtonStyle.red)
+    async def bouton_pdf(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
+
+        nom_temp = f"temp_{interaction.id}"
+        generation_pdf = generer_pdf_farm(nom_temp, self.count, self.donnees_totale, self.donnees_prix)
+
+        with open(generation_pdf, 'rb') as f:
+            discord_file = discord.File(f, filename=f"Farm_{self.nom_propre}.pdf")
+            await interaction.followup.send(content="Voici ton fichier :", file=discord_file)
+
+        if os.path.exists(generation_pdf):
+            os.remove(generation_pdf)
+
+
+
     @discord.ui.button(label="📊 Télécharger l'Excel", style=discord.ButtonStyle.green)
-    async def telecharger(self, interaction: discord.Interaction, button: discord.ui.Button):
-        # On indique qu'on prépare le fichier (en mode invisible pour les autres)
+    async def bouton_excel(self, interaction: discord.Interaction, button: discord.ui.Button):
+
         await interaction.response.defer(ephemeral=True)
 
         # On génère le fichier UNIQUEMENT au moment du clic
@@ -393,7 +604,7 @@ async def commande_worldedit(interaction: discord.Interaction, type_commande: st
 
     try:
         commandeWE = BIBLIO_WE[type_propre][nom_propre][caract_propre]
-        # Vérification de la versio
+        # Vérification de la version
         if isinstance(commandeWE, dict):
             commande = commandeWE.get("we", "Erreur: Commande introuvable")
             lien_image = commandeWE.get("image", None)
@@ -528,32 +739,6 @@ async def craft(interaction: discord.Interaction, nom: str, quantite: float):
         embed.set_image(url=lien_image)
 
     await interaction.followup.send(embed=embed)
-
-@bot.tree.command(name="validation", description="Permet de donner le rôle 'validé' sur le serveur discord")
-@app_commands.describe(joueur="pseudo du joueur à valider")
-@app_commands.checks.has_role(1497908971963551846)
-async def validation(interaction: discord.Interaction, joueur: discord.Member):
-    guild = interaction.guild
-    role_valide = guild.get_role(1271510865627058273)
-
-    if role_valide is None:
-        await interaction.response.send_message("❌ Erreur critique : Le rôle **Validé** n'existe pas. Vérifiez l'ID !", ephemeral=True)
-        return
-
-    if role_valide in joueur.roles:
-        await interaction.response.send_message(f"⚠️ {joueur.mention} possède déjà le rôle Validé !", ephemeral=True)
-        return
-
-    await joueur.add_roles(role_valide)
-    await interaction.response.send_message(f"Le joueur **{joueur.mention}** est désormais validé !")
-
-@validation.error
-async def validation_erreur(interaction: discord.Interaction, error: app_commands.AppCommandError):
-    if isinstance(error, app_commands.MissingRole):
-        await interaction.response.send_message("❌ Accès refusé : Seul un Dirigeant peut valider les nouveaux joueurs !", ephemeral=True)
-    else:
-        await interaction.response.send_message("⚠️ Une erreur est survenue lors de la validation.", ephemeral=True)
-        print(f"Erreur commande validation : {error}")
 
 if __name__ == "__main__":
     f = open('token.txt', 'r')

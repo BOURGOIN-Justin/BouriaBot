@@ -1,5 +1,7 @@
 # Protection du token du bot discord
 token.txt
+Client_ID.txt
+Client_Secret_ID.txt
 
 # Environnement python
 .venv/
@@ -9,10 +11,14 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# doc
+site/
+
 # Fichiers temporaires ou contenant des données de joueurs
 *.schematic
 *.xlsx
 temp_*/
+fusion.py
 
 # Configuration pycharm
 .idea/
