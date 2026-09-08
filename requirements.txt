@@ -1,0 +1,5 @@
+discord.py
+nbt
+openpyxl
+requests
+FPDF2

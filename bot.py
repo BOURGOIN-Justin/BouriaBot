@@ -4,7 +4,6 @@ from discord import app_commands
 from nbt import nbt
 from collections import Counter
 import json
-import os
 import openpyxl
 from openpyxl.styles import Font, Border, Side
 from openpyxl.worksheet.table import Table, TableStyleInfo
@@ -16,6 +15,9 @@ from datetime import datetime
 from fpdf import FPDF
 from fpdf.enums import TableCellFillMode, XPos, YPos
 from fpdf.fonts import FontFace
+import os
+import sys
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
 def generer_excel_farm(nom_schematic, inventaire_blocs, dico_noms, dico_prix):
@@ -344,6 +346,7 @@ class NGBuildBot(commands.Bot):
         intents.message_content = True
         super().__init__(command_prefix="!", intents=intents)
         #configuration yoxo
+
         client = open('Client_ID.txt', 'r')
         self.yoxo_client_id = client.read().strip()
         client.close()
@@ -354,11 +357,22 @@ class NGBuildBot(commands.Bot):
         self.yoxo_expiry = 0
 
 # Mise en place des cogs
+    
     async def setup_hook(self):
-        await self.load_extension("cogs.liste_alliance")
-        await self.load.extension("cogs.validation")
+        cogs_a_charger = ["cogs.liste_alliance", "cogs.validation"]
+        
+        for cog in cogs_a_charger:
+            try:
+                await self.load_extension(cog)
+                print(f"✅ Cog chargé : {cog}")
+            except Exception as e:
+                print(f"❌ Impossible de charger le cog {cog} : {e}")
 
-        await self.tree.sync()
+        try:
+            await self.tree.sync()
+            print("🔄 Commandes Slash synchronisées avec succès !")
+        except Exception as e:
+            print(f"⚠️ Erreur de synchronisation : {e}")
 
     async def get_alliance_details(self, alliance_name):
         date_str = datetime.now().strftime("%Y-%m-%d")
@@ -453,9 +467,6 @@ class NGBuildBot(commands.Bot):
                 print(f"⚠️ Erreur connexion Yoxo : {e}")
         return self.yoxo_token
 
-    async def setup_hook(self):
-        await self.tree.sync()
-        print("🔄 Commandes Slash synchronisées avec succès !")
 bot = NGBuildBot()
 
 
@@ -513,6 +524,7 @@ class BoutonExcel(discord.ui.View):
 
 @bot.tree.command(name="devis", description="Génère un devis à partir d'un fichier .schematic")
 @app_commands.describe(fichier="Le fichier .schematic à analyser")
+@app_commands.checks.has_role(1271510865627058271)
 async def devis(interaction: discord.Interaction, fichier: discord.Attachment):
 
     if not fichier.filename.endswith(".schematic"):
@@ -537,7 +549,7 @@ async def devis(interaction: discord.Interaction, fichier: discord.Attachment):
 
         facture = discord.Embed(
             title=f"<:Groupfqsf:1431359830676996167>  Devis pour le schematic : **{nom_propre}**",
-            description="Voici l'analyse des coûts. Les blocs obtenables gratuitement sont comptabilisés à 0$ (Marbre, minerais, etc).",
+            description="Voici l'analyse des coûts. Les blocs qui ne sont pas présents dans le catalogue sont comptabilisés à 0 $.",
             color=couleur_facture
         )
         facture.set_thumbnail(url=bot.user.display_avatar.url)
@@ -562,6 +574,14 @@ async def devis(interaction: discord.Interaction, fichier: discord.Attachment):
     finally:
         if os.path.exists(chemin_local):
             os.remove(chemin_local)
+
+@devis.error
+async def devis_erreur(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    if isinstance(error, app_commands.MissingRole):
+        await interaction.response.send_message("❌ Accès refusé : Seul un membre de la Bouriatie peut utiliser cette commande !", ephemeral=True)
+    else:
+        await interaction.response.send_message("⚠️ Une erreur est survenue lors de la commande;", ephemeral=True)
+        print(f"Erreur commande : {error}")
 
 async def auto_type_cmd(interaction: discord.Interaction,current: str) -> list[app_commands.Choice[str]]:
     # Propose les catégories principales
@@ -597,6 +617,7 @@ async def auto_cmd_nom_craft(interaction: discord.Interaction, current: str) -> 
 @bot.tree.command(name="we", description="Affiche la commande World Edit pour une texture ou une forme")
 @app_commands.describe(type_commande="Type de commande", nom="Nom de ce que l'on veut", caracteristique="Couleur ou variante")
 @app_commands.autocomplete(type_commande=auto_type_cmd, nom=auto_nom, caracteristique=auto_caract)
+@app_commands.checks.has_role(1271510865627058271)
 async def commande_worldedit(interaction: discord.Interaction, type_commande: str, nom: str, caracteristique: str):
     type_propre = type_commande.lower().strip()
     nom_propre = nom.lower().strip()
@@ -626,6 +647,14 @@ async def commande_worldedit(interaction: discord.Interaction, type_commande: st
         await interaction.response.send_message(embed=embed)
     except KeyError:
         await interaction.response.send_message("Impossible de trouver cette combinaison dans la base de données. Vérifie l'orthographe !",ephemeral=True)
+
+@commande_worldedit.error
+async def validation_erreur(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    if isinstance(error, app_commands.MissingRole):
+        await interaction.response.send_message("❌ Accès refusé : Seul un membre de la Bouriatie peut utiliser cette commande !", ephemeral=True)
+    else:
+        await interaction.response.send_message("⚠️ Une erreur est survenue lors de la commande.", ephemeral=True)
+        print(f"Erreur commande : {error}")
 
 @bot.tree.command(name="schematic", description="Envoie un schematic et ses coordonnées dans un channel discord")
 @app_commands.describe(schematic="Fichier .schematic à envoyer", x = "Coordonnée X", y = "Coordonnée Y", z = "Coordonnée Z", image = "Jolie screen du build")
@@ -678,6 +707,7 @@ async def envoi_schematic_erreur(interaction: discord.Interaction, error: app_co
 @bot.tree.command(name="craft", description="Calcul les ressources primaires pour le craft d'items compliqué")
 @app_commands.describe(nom="Nom de l'item à décomposer", quantite="Quantité de l'item à craft")
 @app_commands.autocomplete(nom=auto_cmd_nom_craft)
+@app_commands.checks.has_role(1271510865627058271)
 async def craft(interaction: discord.Interaction, nom: str, quantite: float):
     nom_propre = nom.lower().strip()
     quantite_float = float(quantite)
@@ -739,6 +769,14 @@ async def craft(interaction: discord.Interaction, nom: str, quantite: float):
         embed.set_image(url=lien_image)
 
     await interaction.followup.send(embed=embed)
+
+@craft.error
+async def craft_erreur(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    if isinstance(error, app_commands.MissingRole):
+        await interaction.response.send_message("❌ Accès refusé : Seul un membre de la Bouriatie peut utiliser cette commande !", ephemeral=True)
+    else:
+        await interaction.response.send_message("⚠️ Une erreur est survenue lors de la validation.", ephemeral=True)
+        print(f"Erreur commande : {error}")
 
 if __name__ == "__main__":
     f = open('token.txt', 'r')
